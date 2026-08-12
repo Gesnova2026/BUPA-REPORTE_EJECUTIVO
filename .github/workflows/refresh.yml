@@ -17,7 +17,7 @@ jobs:
     # por el administrador (Settings -> Actions -> Runners). Si tu instancia
     # sí tiene runners hospedados habilitados, puedes cambiar esto a
     # "ubuntu-latest".
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
