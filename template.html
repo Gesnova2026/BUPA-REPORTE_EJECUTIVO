@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte Ejecutivo — Proyecto BUPA</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f7f7f5;
+    color: #1f1e1c;
+    padding: 24px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .header h1 { font-size: 22px; margin: 0 0 4px 0; font-weight: 700; }
+  .header .sub { font-size: 13px; color: #6b6a67; }
+  .status-pill { font-size: 12px; color: #6b6a67; text-align: right; }
+  .section { margin-bottom: 28px; }
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 10px 0;
+    background: #3a3937;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 8px;
+  }
+  .section-scope {
+    font-size: 12px;
+    color: #8a8985;
+    margin: 0 0 12px 0;
+  }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+  }
+  .kpi-card {
+    background: #fff;
+    border: 1px solid #e8e7e3;
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .kpi-card .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: #8a8985;
+    margin-bottom: 6px;
+  }
+  .kpi-card .value { font-size: 22px; font-weight: 700; }
+  .kpi-card .sub2 { font-size: 12px; color: #8a8985; margin-top: 2px; }
+  .grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel {
+    background: #fff;
+    border: 1px solid #e8e7e3;
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .panel h3 { font-size: 13px; margin: 0 0 12px 0; font-weight: 700; }
+  .chart-wrap { position: relative; height: 260px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 7px 9px; border-bottom: 1px solid #f0efec; white-space: nowrap; }
+  td.wrap { white-space: normal; }
+  th { font-size: 10.5px; text-transform: uppercase; color: #8a8985; font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: #fafaf8; }
+  .table-scroll { overflow-x: auto; }
+  .badge {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; color: #fff; white-space: nowrap;
+  }
+  .rank-bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .rank-bar-bg { flex: 1; background: #f0efec; border-radius: 4px; height: 8px; min-width: 60px; }
+  .rank-bar-fill { background: #5559df; height: 8px; border-radius: 4px; }
+  .empty { color: #8a8985; font-size: 13px; padding: 12px 0; }
+  .loading { padding: 60px 0; text-align: center; color: #8a8985; font-size: 14px; }
+  .total-row td { font-weight: 700; background: #fafaf8; }
+  .col-highlight { background: #edebfb; }
+  .total-row .col-highlight { background: #ddd9f5; }
+  .row-highlight td { background: #fff4e0; }
+  .row-highlight td.col-highlight { background: #f5e6c8; }
+  .chart-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 11.5px; color: #3a3937; }
+  .chart-legend-item { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+  .chart-legend-item .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+  .badge-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    display: inline-block; padding: 2px 8px; border-radius: 999px;
+    font-size: 11px; font-weight: 600; color: #3a3937; background: #f0efec; white-space: nowrap;
+  }
+  th.sortable { cursor: pointer; user-select: none; }
+  th.sortable:hover { color: #3a3937; }
+  .dev-detail-row { cursor: pointer; }
+  .row-chevron { display: inline-block; font-size: 10px; color: #8a8985; margin-right: 6px; transition: transform .15s ease; }
+  .row-chevron.open { transform: rotate(90deg); }
+  .dev-item-detail-row.collapsed { display: none; }
+  .dev-item-detail-row td { padding: 0 10px 14px 28px !important; border-bottom: 1px solid #f0efec; }
+  .dev-item-detail-row table { background: #fafaf8; border-radius: 8px; overflow: hidden; }
+  .section-title.collapsible {
+    cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .section-title.collapsible:hover { color: #b7b9f5; }
+  .section-chevron { font-size: 12px; color: #cfcdc8; transition: transform .15s ease; flex: none; }
+  .section-chevron.collapsed { transform: rotate(-90deg); }
+  .collapsible-body.collapsed { display: none; }
+  .global-collapse-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  @media (max-width: 1000px) {
+    .grid-2, .grid-3, .grid-2col { grid-template-columns: 1fr; }
+  }
+  .filter-bar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; align-items: flex-start; }
+  .ms-dropdown { position: relative; }
+  .ms-button {
+    border: 1px solid #e0dfda; background: #fff; border-radius: 8px; padding: 6px 12px;
+    font-size: 12.5px; cursor: pointer; display: flex; align-items: center; gap: 6px; color: #1f1e1c;
+  }
+  .ms-button:hover { border-color: #c7c6c1; }
+  .ms-button .ms-badge {
+    background: #5559df; color: #fff; border-radius: 999px; font-size: 10px;
+    padding: 1px 6px; font-weight: 700;
+  }
+  .ms-caret { font-size: 9px; color: #8a8985; }
+  .ms-panel {
+    position: absolute; top: calc(100% + 4px); left: 0; background: #fff;
+    border: 1px solid #e0dfda; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,.10);
+    padding: 8px; min-width: 230px; max-height: 260px; overflow-y: auto; z-index: 30; display: none;
+  }
+  .ms-panel.open { display: block; }
+  .ms-option {
+    display: flex; align-items: center; gap: 7px; padding: 5px 4px; font-size: 12.5px;
+    cursor: pointer; border-radius: 5px;
+  }
+  .ms-option:hover { background: #fafaf8; }
+  .ms-option input { margin: 0; }
+  .ms-option .ms-opt-count { margin-left: auto; color: #8a8985; font-size: 11px; }
+  .ms-clear { font-size: 11px; color: #5559df; cursor: pointer; margin-top: 6px; padding: 4px; }
+  .ms-clear:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Reporte Ejecutivo — Proyecto BUPA</h1>
+    <div class="sub">Datos en vivo desde el board de Monday.com "🏢 BUPA"</div>
+  </div>
+  <div class="status-pill" id="lastUpdated">Cargando datos…</div>
+</div>
+
+<div id="loadingMsg" class="loading">Consultando Monday.com…</div>
+
+<div id="content" style="display:none;">
+
+  <div class="global-collapse-bar">
+    <button type="button" id="expandAllBtn" class="ms-button">Expandir todo</button>
+    <button type="button" id="collapseAllBtn" class="ms-button">Contraer todo</button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">📊 Resumen Ejecutivo</div>
+    <div class="section-scope">Alcance: ítems en grupos "Sprint" del board</div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="label">Total Ítems (Sprint)</div><div class="value" id="kpiTotal">–</div></div>
+      <div class="kpi-card"><div class="label">Pendientes (Sprint)</div><div class="value" id="kpiProgreso">–</div></div>
+      <div class="kpi-card"><div class="label">En PROD. / Listo (Sprint)</div><div class="value" id="kpiDetenidos">–</div></div>
+      <div class="kpi-card"><div class="label">No Aplica (Sprint)</div><div class="value" id="kpiNoAplica">–</div></div>
+      <div class="kpi-card"><div class="label">Sprints</div><div class="value" id="kpiSprints">–</div><div class="sub2" id="kpiSprintsRange"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="resumenAvanceHeader">📈 Resumen avance por sprint <span class="section-chevron" id="resumenAvanceChevron">▾</span></div>
+    <div class="collapsible-body" id="resumenAvanceBody">
+      <div class="panel">
+        <div class="chart-wrap" id="resumenAvanceChartWrap" style="height:260px"><canvas id="resumenAvanceChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="sprintHeader">📋 Avance por sprint <span class="section-chevron" id="sprintChevron">▾</span></div>
+    <div class="collapsible-body" id="sprintBody">
+      <div class="section-scope">Completado = En Producción y Listo</div>
+      <div class="section-scope">Pendientes = No Iniciado, En Desarrollo, En Ajustes, Validación GN DEV, Pasar a QA, Validación GN QA, En Validación Cliente, Pasar a Productivo, Con Observaciones</div>
+      <div class="panel">
+        <h3>Ítems, HH y avance por sprint</h3>
+        <div class="table-scroll" id="sprintTableWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="otrosGruposHeader">🗂️ Avance por otros grupos <span class="section-chevron" id="otrosGruposChevron">▾</span></div>
+    <div class="collapsible-body" id="otrosGruposBody">
+      <div class="panel">
+        <div class="table-scroll" id="otrosGruposTableWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="distEstadoHeader">🔵 Distribución por estado <span class="section-chevron" id="distEstadoChevron">▾</span></div>
+    <div class="collapsible-body" id="distEstadoBody">
+      <div class="section-scope">Alcance: ítems en grupos "Sprint"</div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Detalle por estado</h3>
+          <div class="table-scroll" id="statusTableWrap"></div>
+        </div>
+        <div class="panel">
+          <h3>Distribución</h3>
+          <div class="chart-wrap" style="height:360px"><canvas id="statusChart"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="detalleDevHeader">👥 Detalle por desarrollador y tablero (Completo) <span class="section-chevron" id="detalleDevChevron">▾</span></div>
+    <div class="collapsible-body" id="detalleDevBody">
+      <div class="section-scope">Alcance: grupos "Sprint" + Desarrollos/Correcciones generales del board BUPA. Click en un desarrollador para ver el detalle de sus requerimientos.</div>
+      <div class="panel">
+        <div class="filter-bar" id="devDetailFilters"></div>
+        <div class="table-scroll">
+          <table id="devDetailTable">
+            <thead><tr id="devDetailThead"></tr></thead>
+            <tbody id="devDetailTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="clasifHeader">🏷️ Clasificación de ítems <span class="section-chevron" id="clasifChevron">▾</span></div>
+    <div class="collapsible-body" id="clasifBody">
+      <div class="panel">
+        <div class="table-scroll" id="clasifTableWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="procesoHeader">⚙️ Distribución por proceso <span class="section-chevron" id="procesoChevron">▾</span></div>
+    <div class="collapsible-body" id="procesoBody">
+      <div class="panel">
+        <div class="table-scroll" id="procesoTableWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="pendHeader">⚠️ Pendientes y riesgos <span class="section-chevron" id="pendChevron">▾</span></div>
+    <div class="collapsible-body" id="pendBody">
+      <div class="section-scope" id="pendientesScope">Alcance: ítems en grupos "Sprint" no completados</div>
+      <div class="panel">
+        <div class="filter-bar" id="pendientesFilters"></div>
+        <div class="table-scroll" id="pendientesTableWrap"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title collapsible" id="migHeader">🔄 Estado de migraciones de sistema <span class="section-chevron" id="migChevron">▾</span></div>
+    <div class="collapsible-body" id="migBody">
+      <div class="section-scope">Alcance: grupo "Migraciones sistemas" del board</div>
+      <div class="grid-2">
+        <div class="panel">
+          <h3>Resumen</h3>
+          <div class="kpi-grid" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="kpi-card"><div class="label">Total migraciones</div><div class="value" id="kpiMigTotal">–</div></div>
+            <div class="kpi-card"><div class="label">Completadas</div><div class="value" id="kpiMigDone">–</div><div class="sub2" id="kpiMigDonePct"></div></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Resumen por estado</h3>
+          <div class="table-scroll" id="migTableWrap"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BOARD_ID = 9801038662;
+const COLUMN_IDS = ["status", "text_mkvsgz7c", "color_mkvmmqp8", "color_mkvg9a3z", "person", "numeric_mkvmfwxv", "text_mkttdvpm"];
+
+const STATUS_COLORS = {
+  "En Desarrollo": "#fdab3d", "Listo": "#00c875", "Detenido": "#df2f4a",
+  "Validación GN DEV": "#007eb5", "En QA": "#9cd326", "No iniciado": "#c4c4c4",
+  "En ajustes": "#ff6d3b", "No aplica": "#579bfc", "Pasar a Dev": "#74afcc",
+  "En Dev": "#216edf", "Entregar a Cliente": "#175a63", "En validación Cliente": "#bca58a",
+  "Pasar a QA": "#ff007f", "VB cliente": "#037f4c", "Con Observaciones": "#784bd1",
+  "Pasar a Productivo": "#cab641", "En producción": "#ffadad", "Mejora Continua": "#ff5ac4",
+  "Validacion GN QA": "#4eccc6", "RIESGO": "#bb3354", "(Sin estado)": "#d6d5d1"
+};
+
+const DONE_STATUSES = new Set(["Listo", "No aplica", "En producción"]);
+const STOPPED_STATUS = "Detenido";
+const SPRINT_GROUP_RE = /^Sprint\s+(\d+)$/i;
+const SPRINT_NUM_RE = /^Sprint\s+(\d+)/i;
+const EXTRA_SPRINT_GROUPS = ["Sprint 8 ambulatorio", "Sprint 10 Hospitalizado", "Sprint 9 Contabilidad"];
+function isSprintGroup(title) {
+  return SPRINT_GROUP_RE.test(title) || EXTRA_SPRINT_GROUPS.some(g => g.toLowerCase() === (title || "").toLowerCase());
+}
+const DESARROLLOS_GROUP = "Desarrollos/Correcciones generales";
+const MIGRACIONES_GROUP = "Migraciones sistemas";
+
+const STATUS_ORDER = [
+  "No iniciado", "En Desarrollo", "En ajustes", "Pasar a Dev", "Validación GN DEV",
+  "Pasar a QA", "En QA", "Validacion GN QA", "En validación Cliente", "Pasar a Productivo",
+  "Listo", "En producción"
+];
+function statusSortIndex(s) {
+  const idx = STATUS_ORDER.indexOf(s);
+  return idx === -1 ? STATUS_ORDER.length + 1 : idx;
+}
+
+let pendAllItems = [];
+const pendFilters = { dev: new Set(), status: new Set(), sprint: new Set() };
+
+// --- Snapshot estatico: reemplazado en cada build automatico por scripts/refresh_report.py ---
+const STATIC_SNAPSHOT_GENERATED_AT = "__GENERATED_AT_ISO__";
+const STATIC_ITEMS = __STATIC_ITEMS_JSON__;
+
+async function fetchAllItems() {
+  return STATIC_ITEMS;
+}
+
+function num(v) {
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return isNaN(n) ? null : n;
+}
+function sum(arr) { return arr.reduce((a, b) => a + (b || 0), 0); }
+function pct(n, total) { return total ? (n / total * 100) : 0; }
+function fmtPct1(n) { return (isNaN(n) ? 0 : n).toFixed(1) + "%"; }
+function groupTitle(i) { return (i.group && i.group.title) || "Sin grupo"; }
+function escapeHtml(str) {
+  if (str === null || str === undefined) return "";
+  return String(str).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function statusBadge(status) {
+  const s = status || "(Sin estado)";
+  const color = STATUS_COLORS[s] || "#9d50dd";
+  return `<span class="badge" style="background:${color}">${escapeHtml(s)}</span>`;
+}
+function statusBadgeCount(status, count) {
+  const s = status || "(Sin estado)";
+  const color = STATUS_COLORS[s] || "#9d50dd";
+  return `<span class="badge" style="background:${color}">${escapeHtml(s)} · ${count}</span>`;
+}
+function renderTable(containerId, headers, rows, opts) {
+  opts = opts || {};
+  const wrap = document.getElementById(containerId);
+  if (!rows.length) { wrap.innerHTML = '<div class="empty">Sin datos.</div>'; return; }
+  const headerHtml = headers.map(h => {
+    const label = (h && typeof h === "object") ? h.label : h;
+    const cls = (h && typeof h === "object" && h.cls) ? h.cls : "";
+    return `<th class="${cls}">${label}</th>`;
+  }).join("");
+  let html = "<table><thead><tr>" + headerHtml + "</tr></thead><tbody>";
+  rows.forEach(r => {
+    const rowCls = [r._total ? "total-row" : "", r.rowCls || ""].filter(Boolean).join(" ");
+    html += "<tr" + (rowCls ? ` class="${rowCls}"` : "") + ">" + r.cells.map(c => {
+      const cls = [c.wrap ? "wrap" : "", c.cls || ""].filter(Boolean).join(" ");
+      return `<td class="${cls}">${c.html}</td>`;
+    }).join("") + "</tr>";
+  });
+  html += "</tbody></table>";
+  wrap.innerHTML = html;
+}
+
+function isDone(status) { return DONE_STATUSES.has(status || ""); }
+function isStopped(status) { return (status || "") === STOPPED_STATUS; }
+
+const KPI_FINAL_STATUSES = new Set(["No aplica", "En producción", "Listo"]);
+
+function renderResumenEjecutivo(sprintItems) {
+  const total = sprintItems.length;
+  const pendientes = sprintItems.filter(i => !KPI_FINAL_STATUSES.has(i.column_values.status || "")).length;
+  const enProdListo = sprintItems.filter(i => {
+    const s = i.column_values.status || "";
+    return s === "En producción" || s === "Listo";
+  }).length;
+  const noAplica = sprintItems.filter(i => (i.column_values.status || "") === "No aplica").length;
+  const hh = sum(sprintItems.map(i => num(i.column_values.numeric_mkvmfwxv)));
+
+  const sprintNums = [...new Set(sprintItems.map(i => {
+    const m = groupTitle(i).match(SPRINT_NUM_RE);
+    return m ? parseInt(m[1], 10) : null;
+  }).filter(n => n !== null))].sort((a, b) => a - b);
+
+  document.getElementById("kpiTotal").textContent = total;
+  document.getElementById("kpiProgreso").textContent = pendientes;
+  document.getElementById("kpiDetenidos").textContent = enProdListo;
+  document.getElementById("kpiNoAplica").textContent = noAplica;
+  document.getElementById("kpiSprints").textContent = sprintNums.length;
+  document.getElementById("kpiSprintsRange").textContent = sprintNums.length ? `Sprint ${sprintNums[0]} → ${sprintNums[sprintNums.length - 1]}` : "";
+}
+
+function renderSprintSection(sprintItems) {
+  const groups = {};
+  const pendStatusSet = new Set();
+  sprintItems.forEach(i => {
+    const title = groupTitle(i);
+    if (!groups[title]) groups[title] = { items: 0, hh: 0, done: 0, statusCounts: {} };
+    const st = i.column_values.status || "(Sin estado)";
+    groups[title].items += 1;
+    groups[title].hh += num(i.column_values.numeric_mkvmfwxv) || 0;
+    if (isDone(st)) {
+      groups[title].done += 1;
+    } else {
+      groups[title].statusCounts[st] = (groups[title].statusCounts[st] || 0) + 1;
+      pendStatusSet.add(st);
+    }
+  });
+  const labels = Object.keys(groups).sort((a, b) => {
+    const ma = a.match(SPRINT_NUM_RE), mb = b.match(SPRINT_NUM_RE);
+    const na = ma ? parseInt(ma[1], 10) : 999;
+    const nb = mb ? parseInt(mb[1], 10) : 999;
+    if (na !== nb) return na - nb;
+    return a.localeCompare(b);
+  });
+  const pendStatuses = Array.from(pendStatusSet).sort((a, b) => statusSortIndex(a) - statusSortIndex(b));
+  const HIGHLIGHT_STATUS_COLS = new Set(["En validación Cliente", "Pasar a Productivo"]);
+
+  let totItems = 0, totHH = 0, totDone = 0;
+  const totByStatus = {};
+  pendStatuses.forEach(s => { totByStatus[s] = 0; });
+  const rows = labels.map(l => {
+    const g = groups[l];
+    const av = pct(g.done, g.items);
+    totItems += g.items; totHH += g.hh; totDone += g.done;
+    const statusCells = pendStatuses.map(s => {
+      const c = g.statusCounts[s] || 0;
+      totByStatus[s] += c;
+      return { html: c, cls: HIGHLIGHT_STATUS_COLS.has(s) ? "col-highlight" : "" };
+    });
+    const allStatusesNonZero = pendStatuses.length > 0 && pendStatuses.every(s => (g.statusCounts[s] || 0) > 0);
+    const validacionClienteYProductivo = (g.statusCounts["En validación Cliente"] || 0) > 0 || (g.statusCounts["Pasar a Productivo"] || 0) > 0;
+    return { rowCls: (allStatusesNonZero || validacionClienteYProductivo) ? "row-highlight" : "", cells: [
+      { html: escapeHtml(l) }, { html: g.items, cls: "col-highlight" }, { html: Math.round(g.hh) },
+      { html: g.done, cls: "col-highlight" }, ...statusCells, { html: fmtPct1(av) }
+    ]};
+  });
+  rows.push({ _total: true, cells: [
+    { html: "TOTAL" }, { html: totItems, cls: "col-highlight" }, { html: Math.round(totHH) },
+    { html: totDone, cls: "col-highlight" },
+    ...pendStatuses.map(s => ({ html: totByStatus[s], cls: HIGHLIGHT_STATUS_COLS.has(s) ? "col-highlight" : "" })),
+    { html: fmtPct1(pct(totDone, totItems)) }
+  ]});
+  const headers = [
+    "Sprint", { label: "Ítems", cls: "col-highlight" }, "HH Est.", { label: "Compl.", cls: "col-highlight" },
+    ...pendStatuses.map(s => (HIGHLIGHT_STATUS_COLS.has(s) ? { label: escapeHtml(s), cls: "col-highlight" } : escapeHtml(s))),
+    "Avance %"
+  ];
+  renderTable("sprintTableWrap", headers, rows);
+}
+
+let resumenAvanceChartInstance = null;
+function renderResumenAvanceSprint(sprintItems) {
+  const groups = {};
+  sprintItems.forEach(i => {
+    const title = groupTitle(i);
+    if (!groups[title]) groups[title] = { items: 0, done: 0 };
+    groups[title].items += 1;
+    if (isDone(i.column_values.status)) groups[title].done += 1;
+  });
+  const labels = Object.keys(groups).sort((a, b) => {
+    const ma = a.match(SPRINT_NUM_RE), mb = b.match(SPRINT_NUM_RE);
+    const na = ma ? parseInt(ma[1], 10) : 999;
+    const nb = mb ? parseInt(mb[1], 10) : 999;
+    if (na !== nb) return na - nb;
+    return a.localeCompare(b);
+  });
+  const avances = labels.map(l => pct(groups[l].done, groups[l].items));
+  function avanceBarColor(value) {
+    if (value === 100) return "#00c875";
+    if (value >= 80) return "#fdab3d";
+    if (value >= 50) return "#ffcb00";
+    if (value >= 20) return "#66c2e8";
+    return "#5559df";
+  }
+  const barColors = avances.map(avanceBarColor);
+
+  const inBarLabelPlugin = {
+    id: "inBarLabelPlugin",
+    afterDatasetsDraw(chart) {
+      const { ctx } = chart;
+      const meta = chart.getDatasetMeta(0);
+      ctx.save();
+      ctx.font = "10px Arial";
+      ctx.textBaseline = "middle";
+      meta.data.forEach((bar, idx) => {
+        const value = avances[idx];
+        const text = fmtPct1(value);
+        const textWidth = ctx.measureText(text).width;
+        const insideBar = (bar.x - bar.base) > textWidth + 12;
+        if (insideBar) {
+          ctx.fillStyle = "#fff";
+          ctx.textAlign = "right";
+          ctx.fillText(text, bar.x - 6, bar.y);
+        } else {
+          ctx.fillStyle = "#3a3937";
+          ctx.textAlign = "left";
+          ctx.fillText(text, bar.x + 6, bar.y);
+        }
+      });
+      ctx.restore();
+    }
+  };
+
+  if (resumenAvanceChartInstance) resumenAvanceChartInstance.destroy();
+  resumenAvanceChartInstance = new Chart(document.getElementById("resumenAvanceChart"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{ label: "Avance %", data: avances, backgroundColor: barColors, maxBarThickness: 14 }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { right: 30 } },
+      scales: {
+        x: { beginAtZero: true, max: 100, display: false },
+        y: { ticks: { font: { size: 10 } } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => fmtPct1(ctx.parsed.x) } }
+      }
+    },
+    plugins: [inBarLabelPlugin]
+  });
+}
+
+function renderOtrosGruposSection(otherItems) {
+  const groups = {};
+  const pendStatusSet = new Set();
+  otherItems.forEach(i => {
+    const title = groupTitle(i);
+    if (!groups[title]) groups[title] = { items: 0, hh: 0, done: 0, statusCounts: {} };
+    const st = i.column_values.status || "(Sin estado)";
+    groups[title].items += 1;
+    groups[title].hh += num(i.column_values.numeric_mkvmfwxv) || 0;
+    if (isDone(st)) {
+      groups[title].done += 1;
+    } else {
+      groups[title].statusCounts[st] = (groups[title].statusCounts[st] || 0) + 1;
+      pendStatusSet.add(st);
+    }
+  });
+  const labels = Object.keys(groups).sort((a, b) => groups[b].items - groups[a].items);
+  const pendStatuses = Array.from(pendStatusSet).sort((a, b) => statusSortIndex(a) - statusSortIndex(b));
+  const HIGHLIGHT_STATUS_COLS = new Set(["En validación Cliente", "Pasar a Productivo"]);
+
+  let totItems = 0, totHH = 0, totDone = 0;
+  const totByStatus = {};
+  pendStatuses.forEach(s => { totByStatus[s] = 0; });
+  const rows = labels.map(l => {
+    const g = groups[l];
+    const av = pct(g.done, g.items);
+    totItems += g.items; totHH += g.hh; totDone += g.done;
+    const statusCells = pendStatuses.map(s => {
+      const c = g.statusCounts[s] || 0;
+      totByStatus[s] += c;
+      return { html: c, cls: HIGHLIGHT_STATUS_COLS.has(s) ? "col-highlight" : "" };
+    });
+    const allStatusesNonZero = pendStatuses.length > 0 && pendStatuses.every(s => (g.statusCounts[s] || 0) > 0);
+    const validacionClienteYProductivo = (g.statusCounts["En validación Cliente"] || 0) > 0 || (g.statusCounts["Pasar a Productivo"] || 0) > 0;
+    return { rowCls: (allStatusesNonZero || validacionClienteYProductivo) ? "row-highlight" : "", cells: [
+      { html: escapeHtml(l) }, { html: g.items, cls: "col-highlight" }, { html: Math.round(g.hh) },
+      { html: g.done, cls: "col-highlight" }, ...statusCells, { html: fmtPct1(av) }
+    ]};
+  });
+  rows.push({ _total: true, cells: [
+    { html: "TOTAL" }, { html: totItems, cls: "col-highlight" }, { html: Math.round(totHH) },
+    { html: totDone, cls: "col-highlight" },
+    ...pendStatuses.map(s => ({ html: totByStatus[s], cls: HIGHLIGHT_STATUS_COLS.has(s) ? "col-highlight" : "" })),
+    { html: fmtPct1(pct(totDone, totItems)) }
+  ]});
+  const headers = [
+    "Grupo", { label: "Ítems", cls: "col-highlight" }, "HH Est.", { label: "Compl.", cls: "col-highlight" },
+    ...pendStatuses.map(s => (HIGHLIGHT_STATUS_COLS.has(s) ? { label: escapeHtml(s), cls: "col-highlight" } : escapeHtml(s))),
+    "Avance %"
+  ];
+  renderTable("otrosGruposTableWrap", headers, rows);
+}
+
+function renderStatusSection(sprintItems) {
+  const counts = {};
+  const bySprintCount = {};
+  sprintItems.forEach(i => {
+    const s = i.column_values.status || "(Sin estado)";
+    counts[s] = (counts[s] || 0) + 1;
+    const g = groupTitle(i);
+    if (!bySprintCount[s]) bySprintCount[s] = {};
+    bySprintCount[s][g] = (bySprintCount[s][g] || 0) + 1;
+  });
+  const labels = Object.keys(counts).sort((a, b) => {
+    const ia = statusSortIndex(a), ib = statusSortIndex(b);
+    if (ia !== ib) return ia - ib;
+    return counts[b] - counts[a];
+  });
+  const total = sprintItems.length;
+  const rows = labels.map(l => {
+    const sprintCounts = bySprintCount[l] || {};
+    const sprintLabels = Object.keys(sprintCounts).sort((a, b) => {
+      const ma = a.match(SPRINT_NUM_RE), mb = b.match(SPRINT_NUM_RE);
+      const na = ma ? parseInt(ma[1], 10) : 999;
+      const nb = mb ? parseInt(mb[1], 10) : 999;
+      if (na !== nb) return na - nb;
+      return a.localeCompare(b);
+    });
+    const chipsHtml = `<div class="badge-list">${sprintLabels.map(g => `<span class="chip">${escapeHtml(g)} · ${sprintCounts[g]}</span>`).join("")}</div>`;
+    return { cells: [
+      { html: statusBadge(l === "(Sin estado)" ? null : l) }, { html: counts[l] }, { html: fmtPct1(pct(counts[l], total)) }, { html: chipsHtml, wrap: true }
+    ]};
+  });
+  renderTable("statusTableWrap", ["Estado", "Ítems", "%", "Sprint"], rows);
+
+  new Chart(document.getElementById("statusChart"), {
+    type: "doughnut",
+    data: { labels, datasets: [{ data: labels.map(l => counts[l]), backgroundColor: labels.map(l => STATUS_COLORS[l] || "#9d50dd") }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: "bottom",
+          labels: {
+            boxWidth: 12, font: { size: 10 },
+            generateLabels: (chart) => {
+              const d = chart.data;
+              const dataArr = d.datasets[0].data;
+              const grandTotal = dataArr.reduce((a, b) => a + b, 0);
+              return d.labels.map((label, i) => {
+                const value = dataArr[i];
+                const p = grandTotal ? (value / grandTotal * 100).toFixed(1) : "0.0";
+                return {
+                  text: `${label}: ${value} (${p}%)`,
+                  fillStyle: d.datasets[0].backgroundColor[i],
+                  strokeStyle: d.datasets[0].backgroundColor[i],
+                  index: i
+                };
+              });
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function sprintChipsHtml(sprintCounts) {
+  const sprintLabels = Object.keys(sprintCounts).sort((a, b) => {
+    const ma = a.match(SPRINT_NUM_RE), mb = b.match(SPRINT_NUM_RE);
+    const na = ma ? parseInt(ma[1], 10) : 999;
+    const nb = mb ? parseInt(mb[1], 10) : 999;
+    if (na !== nb) return na - nb;
+    return a.localeCompare(b);
+  });
+  return `<div class="badge-list">${sprintLabels.map(g => `<span class="chip">${escapeHtml(g)} · ${sprintCounts[g]}</span>`).join("")}</div>`;
+}
+
+function buildGenericMultiSelect(label, valueCounts, selectedSet, onChange) {
+  const dropdown = document.createElement("div");
+  dropdown.className = "ms-dropdown";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "ms-button";
+  dropdown.appendChild(btn);
+
+  const panel = document.createElement("div");
+  panel.className = "ms-panel";
+  dropdown.appendChild(panel);
+
+  function updateLabel() {
+    const n = selectedSet.size;
+    btn.innerHTML = `${escapeHtml(label)}${n ? ` <span class="ms-badge">${n}</span>` : ""} <span class="ms-caret">▾</span>`;
+  }
+  updateLabel();
+
+  valueCounts.forEach(({ value, count }) => {
+    const opt = document.createElement("label");
+    opt.className = "ms-option";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = selectedSet.has(value);
+    cb.addEventListener("change", () => {
+      if (cb.checked) selectedSet.add(value); else selectedSet.delete(value);
+      updateLabel();
+      onChange();
+    });
+    opt.appendChild(cb);
+    const txt = document.createElement("span");
+    txt.textContent = value;
+    opt.appendChild(txt);
+    const cnt = document.createElement("span");
+    cnt.className = "ms-opt-count";
+    cnt.textContent = count;
+    opt.appendChild(cnt);
+    panel.appendChild(opt);
+  });
+
+  const clear = document.createElement("div");
+  clear.className = "ms-clear";
+  clear.textContent = "Limpiar selección";
+  clear.addEventListener("click", (e) => {
+    e.stopPropagation();
+    selectedSet.clear();
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    updateLabel();
+    onChange();
+  });
+  panel.appendChild(clear);
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasOpen = panel.classList.contains("open");
+    document.querySelectorAll(".ms-panel.open").forEach(p => p.classList.remove("open"));
+    if (!wasOpen) panel.classList.add("open");
+  });
+  panel.addEventListener("click", (e) => e.stopPropagation());
+
+  return dropdown;
+}
+
+function renderDevDetailSection(devScopeItems) {
+  const devs = {};
+  devScopeItems.forEach(i => {
+    const list = getDevList(i);
+    const names = list.length ? list : ["Sin asignar"];
+    names.forEach(name => {
+      if (!devs[name]) devs[name] = { name, total: 0, done: 0, items: [] };
+      devs[name].total += 1;
+      if (isDone(i.column_values.status)) devs[name].done += 1;
+      devs[name].items.push({ name: i.name, group: groupTitle(i), status: i.column_values.status });
+    });
+  });
+  let devArr = Object.values(devs).sort((a, b) => b.total - a.total);
+
+  const statusFilter = new Set();
+
+  function computeStatusOptions() {
+    const counts = {};
+    devArr.forEach(d => d.items.forEach(it => {
+      const s = it.status || "(Sin estado)";
+      counts[s] = (counts[s] || 0) + 1;
+    }));
+    return Object.keys(counts).sort((a, b) => {
+      const ia = statusSortIndex(a), ib = statusSortIndex(b);
+      if (ia !== ib) return ia - ib;
+      return counts[b] - counts[a];
+    }).map(v => ({ value: v, count: counts[v] }));
+  }
+
+  const filterBar = document.getElementById("devDetailFilters");
+  filterBar.innerHTML = "";
+  filterBar.appendChild(buildGenericMultiSelect("Estado", computeStatusOptions(), statusFilter, () => renderDevDetailRows()));
+
+  const cols = [
+    { label: "Desarrollador", sortable: true },
+    { label: "Estados", sortable: false },
+    { label: "Total", sortable: true },
+    { label: "% Avanzado", sortable: true }
+  ];
+  const thead = document.getElementById("devDetailThead");
+  thead.innerHTML = cols.map((c, i) => `<th class="${c.sortable ? 'sortable' : ''}" data-idx="${i}">${c.label}</th>`).join("");
+
+  let sortDir = {};
+  thead.querySelectorAll("th.sortable").forEach(th => {
+    th.addEventListener("click", () => {
+      const idx = parseInt(th.dataset.idx, 10);
+      sortDir[idx] = !sortDir[idx];
+      const dir = sortDir[idx] ? 1 : -1;
+      devArr = [...devArr].sort((a, b) => {
+        let av, bv;
+        if (idx === 0) return dir * a.name.localeCompare(b.name);
+        if (idx === 2) { av = a.total; bv = b.total; }
+        else { av = a.total ? a.done / a.total : 0; bv = b.total ? b.done / b.total : 0; }
+        return dir * (av - bv);
+      });
+      renderDevDetailRows();
+    });
+  });
+
+  function renderDevDetailRows() {
+    const tbody = document.getElementById("devDetailTbody");
+    tbody.innerHTML = "";
+    devArr.forEach((d, i) => {
+      const pctVal = d.total ? Math.round((d.done / d.total) * 100) : 0;
+      const scCounts = {};
+      d.items.forEach(it => {
+        const s = it.status || "(Sin estado)";
+        scCounts[s] = (scCounts[s] || 0) + 1;
+      });
+      const statuses = Object.keys(scCounts).sort((a, b) => {
+        const ia = statusSortIndex(a), ib = statusSortIndex(b);
+        if (ia !== ib) return ia - ib;
+        return scCounts[b] - scCounts[a];
+      });
+      const statusBadgesHtml = `<div class="badge-list">${statuses.map(s => statusBadgeCount(s, scCounts[s])).join("")}</div>`;
+      const mainRow = document.createElement("tr");
+      mainRow.className = "dev-detail-row";
+      mainRow.innerHTML = `
+        <td><span class="row-chevron" id="ddchev_${i}">&#9656;</span>${escapeHtml(d.name)}</td>
+        <td class="wrap">${statusBadgesHtml}</td>
+        <td>${d.total}</td>
+        <td><div class="rank-bar-wrap"><div class="rank-bar-bg" style="width:80px"><div class="rank-bar-fill" style="width:${pctVal}%"></div></div><span>${pctVal}%</span></div></td>
+      `;
+      const detailRow = document.createElement("tr");
+      detailRow.className = "dev-item-detail-row collapsed";
+      const td = document.createElement("td");
+      td.colSpan = cols.length;
+      const filtered = d.items.filter(it => statusFilter.size === 0 || statusFilter.has(it.status || "(Sin estado)"));
+      if (!filtered.length) {
+        td.innerHTML = `<div class="empty">Sin requerimientos con este filtro.</div>`;
+      } else {
+        const sorted = [...filtered].sort((a, b) => a.group.localeCompare(b.group) || a.name.localeCompare(b.name));
+        td.innerHTML = `<table><thead><tr><th>Requerimiento</th><th>Grupo</th><th>Estado</th></tr></thead><tbody>${
+          sorted.map(it => `<tr><td class="wrap">${escapeHtml(it.name)}</td><td>${escapeHtml(it.group)}</td><td>${statusBadge(it.status)}</td></tr>`).join("")
+        }</tbody></table>`;
+      }
+      detailRow.appendChild(td);
+      mainRow.addEventListener("click", () => {
+        detailRow.classList.toggle("collapsed");
+        document.getElementById(`ddchev_${i}`).classList.toggle("open");
+      });
+      tbody.appendChild(mainRow);
+      tbody.appendChild(detailRow);
+    });
+  }
+  renderDevDetailRows();
+}
+
+function renderBreakdown(containerId, sprintItems, columnId, emptyLabel, includeSprint, perStatusMode) {
+  const groups = {};
+  const pendStatusSet = new Set();
+  const HIGHLIGHT_STATUS_COLS = new Set(["En validación Cliente", "Pasar a Productivo"]);
+  sprintItems.forEach(i => {
+    const raw = i.column_values[columnId];
+    const v = String(raw === null || raw === undefined ? "" : raw).trim() || emptyLabel;
+    if (!groups[v]) groups[v] = { items: 0, done: 0, stopped: 0, bySprint: {}, statusCounts: {} };
+    groups[v].items += 1;
+    const st = i.column_values.status || "(Sin estado)";
+    if (isDone(st)) {
+      groups[v].done += 1;
+    } else {
+      if (isStopped(st)) groups[v].stopped += 1;
+      if (perStatusMode) {
+        groups[v].statusCounts[st] = (groups[v].statusCounts[st] || 0) + 1;
+        pendStatusSet.add(st);
+      }
+    }
+    if (includeSprint) {
+      const g = groupTitle(i);
+      groups[v].bySprint[g] = (groups[v].bySprint[g] || 0) + 1;
+    }
+  });
+  const total = sprintItems.length;
+  const labels = Object.keys(groups).sort((a, b) => groups[b].items - groups[a].items);
+  const pendStatuses = perStatusMode ? Array.from(pendStatusSet).sort((a, b) => statusSortIndex(a) - statusSortIndex(b)) : [];
+
+  let totItems = 0, totDone = 0, totStopped = 0;
+  const totByStatus = {};
+  pendStatuses.forEach(s => { totByStatus[s] = 0; });
+  const rows = labels.map(l => {
+    const g = groups[l];
+    totItems += g.items; totDone += g.done; totStopped += g.stopped;
+    const cells = [
+      { html: escapeHtml(l), wrap: true },
+      { html: g.items, cls: perStatusMode ? "col-highlight" : "" },
+      { html: fmtPct1(pct(g.items, total)) },
+      { html: g.done, cls: perStatusMode ? "col-highlight" : "" }
+    ];
+    let rowHighlight = false;
+    if (perStatusMode) {
+      const statusCells = pendStatuses.map(s => {
+        const c = g.statusCounts[s] || 0;
+        totByStatus[s] += c;
+        return { html: c, cls: HIGHLIGHT_STATUS_COLS.has(s) ? "col-highlight" : "" };
+      });
+      cells.push(...statusCells);
+      const allStatusesNonZero = pendStatuses.length > 0 && pendStatuses.every(s => (g.statusCounts[s] || 0) > 0);
+      const validacionClienteYProductivo = (g.statusCounts["En validación Cliente"] || 0) > 0 || (g.statusCounts["Pasar a Productivo"] || 0) > 0;
+      rowHighlight = allStatusesNonZero || validacionClienteYProductivo;
+    } else {
+      const progreso = g.items - g.done - g.stopped;
+      cells.push({ html: progreso }, { html: g.stopped });
+    }
+    if (includeSprint) cells.push({ html: sprintChipsHtml(g.bySprint), wrap: true });
+    return { rowCls: rowHighlight ? "row-highlight" : "", cells };
+  });
+  const totalCells = [
+    { html: "TOTAL" },
+    { html: totItems, cls: perStatusMode ? "col-highlight" : "" },
+    { html: fmtPct1(pct(totItems, total)) },
+    { html: totDone, cls: perStatusMode ? "col-highlight" : "" }
+  ];
+  if (perStatusMode) {
+    totalCells.push(...pendStatuses.map(s => ({ html: totByStatus[s], cls: HIGHLIGHT_STATUS_COLS.has(s) ? "col-highlight" : "" })));
+  } else {
+    totalCells.push({ html: totItems - totDone - totStopped }, { html: totStopped });
+  }
+  if (includeSprint) totalCells.push({ html: "" });
+  rows.push({ _total: true, cells: totalCells });
+
+  const headers = ["Clasificación / Proceso", { label: "Ítems", cls: perStatusMode ? "col-highlight" : "" }, "%", { label: "Completados", cls: perStatusMode ? "col-highlight" : "" }];
+  if (perStatusMode) {
+    headers.push(...pendStatuses.map(s => (HIGHLIGHT_STATUS_COLS.has(s) ? { label: escapeHtml(s), cls: "col-highlight" } : escapeHtml(s))));
+  } else {
+    headers.push("En progreso", "Detenidos");
+  }
+  if (includeSprint) headers.push("Sprint");
+  renderTable(containerId, headers, rows);
+}
+
+function getDevList(item) {
+  const raw = item.column_values.person;
+  if (!raw) return [];
+  return String(raw).split(",").map(s => s.trim()).filter(Boolean);
+}
+function getPendSprintLabel(item) {
+  return item.column_values.color_mkvg9a3z || groupTitle(item);
+}
+
+function buildMultiSelect(key, label, valueCounts) {
+  const dropdown = document.createElement("div");
+  dropdown.className = "ms-dropdown";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "ms-button";
+  dropdown.appendChild(btn);
+
+  const panel = document.createElement("div");
+  panel.className = "ms-panel";
+  dropdown.appendChild(panel);
+
+  function updateButtonLabel() {
+    const n = pendFilters[key].size;
+    btn.innerHTML = `${escapeHtml(label)}${n ? ` <span class="ms-badge">${n}</span>` : ""} <span class="ms-caret">▾</span>`;
+  }
+  updateButtonLabel();
+
+  valueCounts.forEach(({ value, count }) => {
+    const opt = document.createElement("label");
+    opt.className = "ms-option";
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = pendFilters[key].has(value);
+    cb.addEventListener("change", () => {
+      if (cb.checked) pendFilters[key].add(value); else pendFilters[key].delete(value);
+      updateButtonLabel();
+      renderPendientesTable();
+    });
+    opt.appendChild(cb);
+    const txt = document.createElement("span");
+    txt.textContent = value;
+    opt.appendChild(txt);
+    const cnt = document.createElement("span");
+    cnt.className = "ms-opt-count";
+    cnt.textContent = count;
+    opt.appendChild(cnt);
+    panel.appendChild(opt);
+  });
+
+  const clear = document.createElement("div");
+  clear.className = "ms-clear";
+  clear.textContent = "Limpiar selección";
+  clear.addEventListener("click", (e) => {
+    e.stopPropagation();
+    pendFilters[key].clear();
+    panel.querySelectorAll('input[type="checkbox"]').forEach(cb => { cb.checked = false; });
+    updateButtonLabel();
+    renderPendientesTable();
+  });
+  panel.appendChild(clear);
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const wasOpen = panel.classList.contains("open");
+    document.querySelectorAll(".ms-panel.open").forEach(p => p.classList.remove("open"));
+    if (!wasOpen) panel.classList.add("open");
+  });
+  panel.addEventListener("click", (e) => e.stopPropagation());
+
+  return dropdown;
+}
+
+document.addEventListener("click", () => {
+  document.querySelectorAll(".ms-panel.open").forEach(p => p.classList.remove("open"));
+});
+
+function renderPendientes(sprintItems) {
+  const pend = sprintItems.filter(i => !isDone(i.column_values.status));
+  pendAllItems = pend;
+  document.getElementById("pendientesScope").textContent =
+    `Alcance: ítems en grupos "Sprint" no completados — total: ${pend.length} de ${sprintItems.length}`;
+
+  const devCounts = {}, statusCounts = {}, sprintCounts = {};
+  pend.forEach(i => {
+    const devs = getDevList(i);
+    if (devs.length) devs.forEach(d => { devCounts[d] = (devCounts[d] || 0) + 1; });
+    else devCounts["Sin asignar"] = (devCounts["Sin asignar"] || 0) + 1;
+    const s = i.column_values.status || "(Sin estado)";
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+    const sp = getPendSprintLabel(i);
+    sprintCounts[sp] = (sprintCounts[sp] || 0) + 1;
+  });
+  const toList = (obj) => Object.keys(obj).sort((a, b) => obj[b] - obj[a]).map(v => ({ value: v, count: obj[v] }));
+  const toListByStatusOrder = (obj) => Object.keys(obj).sort((a, b) => {
+    const ia = statusSortIndex(a), ib = statusSortIndex(b);
+    if (ia !== ib) return ia - ib;
+    return obj[b] - obj[a];
+  }).map(v => ({ value: v, count: obj[v] }));
+
+  const filterBar = document.getElementById("pendientesFilters");
+  filterBar.innerHTML = "";
+  filterBar.appendChild(buildMultiSelect("dev", "Desarrollador", toList(devCounts)));
+  filterBar.appendChild(buildMultiSelect("status", "Estado", toListByStatusOrder(statusCounts)));
+  filterBar.appendChild(buildMultiSelect("sprint", "Sprint", toList(sprintCounts)));
+
+  renderPendientesTable();
+}
+
+function renderPendientesTable() {
+  const filtered = pendAllItems.filter(i => {
+    if (pendFilters.dev.size) {
+      const devs = getDevList(i);
+      const devMatch = devs.length ? devs.some(d => pendFilters.dev.has(d)) : pendFilters.dev.has("Sin asignar");
+      if (!devMatch) return false;
+    }
+    if (pendFilters.status.size) {
+      const s = i.column_values.status || "(Sin estado)";
+      if (!pendFilters.status.has(s)) return false;
+    }
+    if (pendFilters.sprint.size) {
+      if (!pendFilters.sprint.has(getPendSprintLabel(i))) return false;
+    }
+    return true;
+  });
+
+  filtered.sort((a, b) => {
+    const ia = statusSortIndex(a.column_values.status || "(Sin estado)");
+    const ib = statusSortIndex(b.column_values.status || "(Sin estado)");
+    if (ia !== ib) return ia - ib;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+
+  const rows = filtered.slice(0, 40).map(i => ({ cells: [
+    { html: escapeHtml(i.name), wrap: true },
+    { html: escapeHtml(getPendSprintLabel(i)) },
+    { html: statusBadge(i.column_values.status) },
+    { html: escapeHtml(i.column_values.person || "Sin asignar") },
+    { html: escapeHtml(i.column_values.text_mkttdvpm || "-"), wrap: true }
+  ]}));
+  renderTable("pendientesTableWrap", ["Nombre", "Sprint", "Estado", "Desarrollador", "Observación"], rows);
+  if (filtered.length > 40) {
+    document.getElementById("pendientesTableWrap").innerHTML += `<div class="empty">Mostrando 40 de ${filtered.length} (filtrado de ${pendAllItems.length} totales).</div>`;
+  } else if (filtered.length < pendAllItems.length) {
+    document.getElementById("pendientesTableWrap").innerHTML += `<div class="empty">${filtered.length} de ${pendAllItems.length} totales (según filtro aplicado).</div>`;
+  }
+}
+
+function renderMigraciones(migItems) {
+  const total = migItems.length;
+  const done = migItems.filter(i => isDone(i.column_values.status)).length;
+  document.getElementById("kpiMigTotal").textContent = total;
+  document.getElementById("kpiMigDone").textContent = done;
+  document.getElementById("kpiMigDonePct").textContent = fmtPct1(pct(done, total)) + " del total";
+
+  const counts = {};
+  migItems.forEach(i => {
+    const s = i.column_values.status || "(Sin estado)";
+    counts[s] = (counts[s] || 0) + 1;
+  });
+  const labels = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  const rows = labels.map(l => ({ cells: [
+    { html: statusBadge(l === "(Sin estado)" ? null : l) }, { html: counts[l] }, { html: fmtPct1(pct(counts[l], total)) }
+  ]}));
+  renderTable("migTableWrap", ["Estado", "Ítems", "%"], rows);
+}
+
+async function init() {
+  try {
+    const items = await fetchAllItems();
+    const sprintItems = items.filter(i => isSprintGroup(groupTitle(i)));
+    const devScopeItems = items.filter(i => isSprintGroup(groupTitle(i)) || groupTitle(i) === DESARROLLOS_GROUP);
+    const migItems = items.filter(i => groupTitle(i) === MIGRACIONES_GROUP);
+    const otherItems = items.filter(i => !isSprintGroup(groupTitle(i)) && groupTitle(i) !== MIGRACIONES_GROUP);
+
+    renderResumenEjecutivo(sprintItems);
+    renderSprintSection(sprintItems);
+    renderResumenAvanceSprint(sprintItems);
+    renderOtrosGruposSection(otherItems);
+    renderStatusSection(sprintItems);
+    renderDevDetailSection(devScopeItems);
+    renderBreakdown("clasifTableWrap", sprintItems, "text_mkvsgz7c", "(Sin clasificación)", false, true);
+    renderBreakdown("procesoTableWrap", sprintItems, "color_mkvmmqp8", "(Sin proceso)", true, false);
+    renderPendientes(sprintItems);
+    renderMigraciones(migItems);
+
+    document.getElementById("lastUpdated").textContent = "Snapshot estatico - Generado: " + new Date(STATIC_SNAPSHOT_GENERATED_AT).toLocaleString("es-CL", { timeZone: "America/Santiago" }) + " (hora Chile)";
+    document.getElementById("loadingMsg").style.display = "none";
+    document.getElementById("content").style.display = "block";
+  } catch (err) {
+    document.getElementById("loadingMsg").textContent = "Error al cargar datos de Monday.com: " + err.message;
+  }
+}
+
+function setupCollapsible(headerId, bodyId, chevronId) {
+  const header = document.getElementById(headerId);
+  const body = document.getElementById(bodyId);
+  const chevron = document.getElementById(chevronId);
+  if (!header || !body || !chevron) return;
+  header.addEventListener("click", () => {
+    body.classList.toggle("collapsed");
+    chevron.classList.toggle("collapsed");
+  });
+}
+
+const SECTION_IDS = [
+  ["sprintHeader", "sprintBody", "sprintChevron"],
+  ["resumenAvanceHeader", "resumenAvanceBody", "resumenAvanceChevron"],
+  ["otrosGruposHeader", "otrosGruposBody", "otrosGruposChevron"],
+  ["distEstadoHeader", "distEstadoBody", "distEstadoChevron"],
+  ["detalleDevHeader", "detalleDevBody", "detalleDevChevron"],
+  ["clasifHeader", "clasifBody", "clasifChevron"],
+  ["procesoHeader", "procesoBody", "procesoChevron"],
+  ["pendHeader", "pendBody", "pendChevron"],
+  ["migHeader", "migBody", "migChevron"]
+];
+SECTION_IDS.forEach(([h, b, c]) => setupCollapsible(h, b, c));
+
+function setAllCollapsed(collapsed) {
+  SECTION_IDS.forEach(([h, b, c]) => {
+    const body = document.getElementById(b);
+    const chevron = document.getElementById(c);
+    if (!body || !chevron) return;
+    body.classList.toggle("collapsed", collapsed);
+    chevron.classList.toggle("collapsed", collapsed);
+  });
+}
+document.getElementById("collapseAllBtn").addEventListener("click", () => setAllCollapsed(true));
+document.getElementById("expandAllBtn").addEventListener("click", () => setAllCollapsed(false));
+
+init();
+</script>
+
+</body>
+</html>
